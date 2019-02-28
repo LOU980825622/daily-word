@@ -1,0 +1,12 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/show/show"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#363636",
+    "navigationBarTitleText": "每日心情寄语",
+    "navigationBarTextStyle": "white"
+  }
+}

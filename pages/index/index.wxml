@@ -1,0 +1,40 @@
+<!--index.wxml-->
+<view class="container">
+  <image class="header-image" src="{{kinds.backsrc}}" mode="aspectFill"></image>
+  <view class="background-btns common-border">
+    <view wx:for="{{bakBtn}}" wx:for-item="item" wx:for-key="index" wx:key="index" data-id="{{index}}" bindtap="backTap"
+    class="background-btn {{(index === backIndex && index !== 4) ? 'btn-chosen': ''}} {{index === 4 ? 'background-local' : ''}}">
+      <text>{{item}}</text>
+    </view>
+  </view>
+  <view class="item-title">样式</view>
+  <view class="textstyle-btns common-border">
+    <view wx:for="{{textPosition}}" wx:for-item="item" wx:for-key="index" wx:key="index" data-id="{{index}}" bindtap="styleTap"
+    class="textstyle-btn {{index === kinds.styleIndex ? 'btn-chosen': ''}}">
+      <text>{{item}}</text>
+    </view>
+  </view>
+  <view class="common-border time-switch">
+    <text>日期</text>
+    <switch bindchange="timeSwitch"></switch>
+  </view>
+  <view class="item-title">颜色</view>
+  <view class="common-border color-btns">
+    <view wx:for="{{colors}}" wx:key="index" wx:for-item="item" class="color-btn {{kinds.colorIndex === index ? 'color-chosen' : ''}}" style="background-color: {{item}}" bindtap="colorTap" data-id="{{index}}"></view>
+  </view>
+  <view class="textarea-box">
+    <view class="textarea-wrapper">
+      <textarea class="word-textarea" placeholder="填写寄语" maxlength="60" value="{{kinds.word}}" bindblur="textareaChange" data-type="kinds.word" data-string="wordLen"></textarea>
+      <view class="textarea-counter">
+        <text>{{wordLen}}/60</text>
+      </view>
+    </view>
+    <view class="textarea-wrapper" style="height: 100rpx;">
+      <textarea class="name-textarea" placeholder="署名（选填）" maxlength="10" value="{{kinds.name}}" bindblur="textareaChange" data-type="kinds.name" data-string="nameLen"></textarea>
+      <view class="textarea-counter">
+        <text>{{nameLen}}/10</text>
+      </view>
+    </view>
+  </view>
+  <button class="create-btn" bindtap="createPoster">生成海报</button>
+</view>

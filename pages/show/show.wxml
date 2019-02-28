@@ -1,0 +1,6 @@
+<view class="container">
+  <image src="{{kinds.backsrc}}" mode="widthFix" class="dommy-dom" id="dommy-dom"></image>
+  <canvas canvas-id="cvs" class="cvs" height="{{canvasHeight}}" style="width: {{canvasHalfWidth * 2}}px; height: {{canvasHeight}}px" bindtouchstart="canvasTouch" bindtouchmove="textMove" bindtouchcancel="stopMoveText" bindtouchend="stopMoveText" disable-scroll="true"></canvas>
+  <view wx:if="{{kinds.styleIndex === 0}}" class="text-tip">{{typeof(styleIndex)}}拖动文字可移动文字位置</view>
+  <button class="create-btn" bindtap="createPic">保存图片到相册</button>
+</view>
