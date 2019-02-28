@@ -126,6 +126,7 @@ Page({
       this.setData({
         canvasHeight: res[0].height * 2 + textBlockHeight + 20,
         canvasHalfWidth: res[0].width,
+        'textOffset.x': res[0].width,
         textHeight: textBlockHeight
       })
       ctx.setFillStyle('white');
