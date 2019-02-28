@@ -19,7 +19,8 @@ Page({
       y: 0
     },  // 手指移动之前的位置
     textHalfWidth: 135, // 画布绘制字体的宽度的一半(270位最小宽度)
-    flag: true
+    flag: true,
+    textBlockHeight: 0 // 图片上文字高度
   },
   onLoad: function (options) {
     this.setData({
@@ -41,16 +42,15 @@ Page({
           i++;
         } while (textArrLen > i);
         const textBlockHeight = this.data.kinds.name !== '' ? 25 * textArrLen + 35 : 25 * textArrLen; // 计算画布中文字的高度
-        const query = wx.createSelectorQuery();
-        // query.select('#dommy-dom').boundingClientRect().exec((res) => { // 计算背景图的尺寸，以便计算画布尺寸
-        //   this.drawKind(res, textBlockHeight);
-        // })
+        this.setData({
+          textBlockHeight: textBlockHeight
+        })
+        wx.showLoading({
+          title: '加载中',
+        })
         if (this.data.kinds.backIndex === 4) {
           this.setData({
             cachePath: this.data.kinds.backsrc
-          })
-          query.select('#dommy-dom').boundingClientRect().exec((res) => { // 计算背景图的尺寸，以便计算画布尺寸
-            this.drawKind(res, textBlockHeight);
           })
         } else {
           wx.downloadFile({ // 将背景图保存在本地
@@ -60,14 +60,18 @@ Page({
                 this.setData({
                   cachePath: res.tempFilePath
                 })
-                query.select('#dommy-dom').boundingClientRect().exec((res) => { // 计算背景图的尺寸，以便计算画布尺寸
-                  this.drawKind(res, textBlockHeight);
-                })
               }
             }
           })
         }
       }
+    })
+  },
+  imgLoaded() {
+    const query = wx.createSelectorQuery();
+    query.select('#dommy-dom').boundingClientRect().exec((res) => { // 计算背景图的尺寸，以便计算画布尺寸
+      this.drawKind(res, this.data.textBlockHeight);
+      wx.hideLoading()
     })
   },
   // 点击按钮保存图片
