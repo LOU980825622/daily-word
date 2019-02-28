@@ -83,21 +83,63 @@ Page({
       fileType: 'jpg',
       quality: 1,
       success(resp) {
-        wx.saveImageToPhotosAlbum({
-          filePath: resp.tempFilePath,
-          success(res) {
-            wx.showToast({
-              title: '保存成功',
-              icon: 'success',
-              duration: 1000
-            })
-          },
-          fail(res) {
-            wx.showToast({
-              title: '保存失败',
-              icon: 'success',
-              duration: 1000
-            })
+        wx.getSetting({
+          success: res => {
+            if (res.authSetting['scope.writePhotosAlbum'] == false) {
+              wx.showModal({
+                title: '提示',
+                content: '是否授权将图片保存到相册？',
+                confirmColor: '#2ca2ed',
+                success: res => {
+                  //点击确定打开授权设置
+                  if (res.confirm) {
+                    wx.openSetting({
+                      success: res => {
+                        setTimeout(() => {
+                          if (res.authSetting['scope.writePhotosAlbum'] == true) {
+                            wx.saveImageToPhotosAlbum({
+                              filePath: sharePicUrl,
+                              success: res => {
+                                this.closeShare();
+                                wx.showToast({
+                                  title: '保存成功！',
+                                  icon: 'success',
+                                  mask: true
+                                })
+                              },
+                              fail: err => {
+                                wx.showToast({
+                                  title: '保存失败！',
+                                  icon: 'none',
+                                  mask: true
+                                })
+                              }
+                            })
+                          } else {
+                            wx.showToast({
+                              title: '授权获取失败！',
+                              icon: 'none',
+                              mask: true
+                            })
+                          }
+                        }, 500)
+                      }
+                    })
+                  }
+                }
+              })
+            } else {
+              wx.saveImageToPhotosAlbum({
+                filePath: resp.tempFilePath,
+                success: res => {
+                  wx.showToast({
+                    title: '保存成功！',
+                    icon: 'success',
+                    mask: true
+                  })
+                }
+              })
+            }
           }
         })
       },
