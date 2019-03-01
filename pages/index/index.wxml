@@ -2,15 +2,18 @@
 <view class="container">
   <image class="header-image" src="{{kinds.backsrc}}" mode="aspectFill"></image>
   <view class="background-btns common-border">
-    <view wx:for="{{bakBtn}}" wx:for-item="item" wx:for-key="index" wx:key="index" data-id="{{index}}" bindtap="backTap"
-    class="background-btn {{(index === backIndex && index !== 4) ? 'btn-chosen': ''}} {{index === 4 ? 'background-local' : ''}}">
+    <view wx:for="{{bakBtn}}" wx:for-item="item" wx:for-key="index" wx:key="index" data-id="{{index}}" bindtap="backTap" class="background-btn {{(index === backIndex && index !== 4) ? 'btn-chosen': ''}} {{index === 4 ? 'background-local' : ''}}">
       <text>{{item}}</text>
+    </view>
+  </view>
+  <view class="item-title">背景颜色 (注：选择背景颜色后，文字在图片上时无背景图)</view>
+  <view class="background-color-btns common-border">
+    <view wx:for="{{bakColor}}" wx:for-item="item" wx:for-key="index" wx:key="index" data-id="{{index}}" bindtap="backColorTap" style="background-color: {{item}};"class="background-color-btn {{index === backColorIndex ? 'color-chosen': ''}}">
     </view>
   </view>
   <view class="item-title">样式</view>
   <view class="textstyle-btns common-border">
-    <view wx:for="{{textPosition}}" wx:for-item="item" wx:for-key="index" wx:key="index" data-id="{{index}}" bindtap="styleTap"
-    class="textstyle-btn {{index === kinds.styleIndex ? 'btn-chosen': ''}}">
+    <view wx:for="{{textPosition}}" wx:for-item="item" wx:for-key="index" wx:key="index" data-id="{{index}}" bindtap="styleTap" class="textstyle-btn {{index === kinds.styleIndex ? 'btn-chosen': ''}}">
       <text>{{item}}</text>
     </view>
   </view>
@@ -22,11 +25,17 @@
   <view class="common-border color-btns">
     <view wx:for="{{colors}}" wx:key="index" wx:for-item="item" class="color-btn {{kinds.colorIndex === index ? 'color-chosen' : ''}}" style="background-color: {{item}}" bindtap="colorTap" data-id="{{index}}"></view>
   </view>
+  <view class="item-title">字体大小</view>
+  <view class="background-btns common-border">
+    <view wx:for="{{textSize}}" wx:for-item="item" wx:for-key="index" wx:key="index" data-id="{{index}}" bindtap="textSizeTap" style="font-size: {{item}}px; text-align: center; line-height: 1;" class="background-btn {{index === textSizeIndex ? 'btn-chosen': ''}}">
+      <text>{{item + '\n号字'}}</text>
+    </view>
+  </view>
   <view class="textarea-box">
     <view class="textarea-wrapper">
-      <textarea class="word-textarea" placeholder="填写寄语" maxlength="60" value="{{kinds.word}}" bindblur="textareaChange" data-type="kinds.word" data-string="wordLen"></textarea>
+      <textarea class="word-textarea" placeholder="填写寄语" maxlength="{{maxTextCount}}" value="{{kinds.word}}" bindblur="textareaChange" data-type="kinds.word" data-string="wordLen"></textarea>
       <view class="textarea-counter">
-        <text>{{wordLen}}/60</text>
+        <text>{{wordLen}}/{{maxTextCount}}</text>
       </view>
     </view>
     <view class="textarea-wrapper" style="height: 100rpx;">

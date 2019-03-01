@@ -14,6 +14,20 @@ Page({
       '背景4',
       '手机\n相册'
     ],
+    bakColor: [
+      '#363636',
+      '#D8BFD8',
+      '#ac00ff',
+      '#0091ff',
+      '#ffffff'
+    ],
+    textCounter: [
+      240,
+      120,
+      60,
+      30,
+      15
+    ],
     textPosition: [
       '文字在图片上',
       '文字在上\n图片在下',
@@ -49,9 +63,19 @@ Page({
       '#FF1CAE',
       '#CFB53B'
     ],
+    textSize: [
+      12,
+      14,
+      18,
+      24,
+      30
+    ],
     wordLen: 0,
     nameLen: 0,
     backIndex: 0,
+    backColorIndex: -1,
+    textSizeIndex: 2,
+    maxTextCount: 60,
     kinds: {
       backsrc: '',
       styleIndex: 0,
@@ -60,7 +84,9 @@ Page({
       colorChosen: '#363636',
       word: '',
       name: '',
-      backIndex: 0
+      backIndex: 0,
+      backColor: '',
+      sizeNum: 18
     }
   },
   onLoad: function () {
@@ -96,6 +122,17 @@ Page({
       })
     }
   },
+  // 选择背景色
+  backColorTap(e) {
+    let tapIndex = e.currentTarget.dataset.id;
+    if (this.data.backColorIndex === tapIndex) {
+      tapIndex = -1;
+    }
+    this.setData({
+      backColorIndex: tapIndex,
+      'kinds.backColor': this.data.bakColor[tapIndex] || ''
+    })
+  },
   // 文字选择样式
   styleTap(e) {
     let tapIndex = e.currentTarget.dataset.id;
@@ -122,6 +159,22 @@ Page({
     this.setData({
       'kinds.colorIndex': tapIndex,
       'kinds.colorChosen': this.data.colors[tapIndex]
+    })
+  },
+  // 选择文字大小
+  textSizeTap(e) {
+    let tapIndex = e.currentTarget.dataset.id;
+    if (this.data.textSizeIndex === tapIndex) {
+      return false;
+    }
+    let textString = this.data.kinds.word.substring(0, this.data.textCounter[tapIndex]);
+    let stringLen = textString.length
+    this.setData({
+      maxTextCount: this.data.textCounter[tapIndex],
+      textSizeIndex: tapIndex,
+      wordLen: stringLen,
+      'kinds.sizeNum': this.data.textSize[tapIndex],
+      'kinds.word': textString
     })
   },
   // 寄语模拟数据的双向绑定

@@ -1,5 +1,4 @@
 // pages/show/show.js
-const PRE_LINE_COUNT = 15; // 每一行的字数
 Page({
   data: {
     kinds: {},
@@ -32,44 +31,55 @@ Page({
         this.setData({
           kinds: res.data
         })
-        let textArrLen = Math.ceil(this.data.kinds.word.length / PRE_LINE_COUNT); // ‘寄语’分行
-        let i = 0;
-        do {
-          let arrItem = this.data.kinds.word.substr(PRE_LINE_COUNT * i, PRE_LINE_COUNT);
-          this.setData({
-            textArr: this.data.textArr.concat(arrItem)
-          })
-          i++;
-        } while (textArrLen > i);
-        const textBlockHeight = this.data.kinds.name !== '' ? 25 * textArrLen + 35 : 25 * textArrLen; // 计算画布中文字的高度
-        this.setData({
-          textBlockHeight: textBlockHeight
-        })
         wx.showLoading({
           title: '加载中',
         })
-        if (this.data.kinds.backIndex === 4) {
+        if (this.data.kinds.styleIndex === 0 && this.data.kinds.backColor && this.data.kinds.backColor !== '') {
           this.setData({
             cachePath: this.data.kinds.backsrc
           })
         } else {
-          wx.downloadFile({ // 将背景图保存在本地
-            url: this.data.kinds.backsrc,
-            success: (res) => {
-              if (res.statusCode === 200) {
-                this.setData({
-                  cachePath: res.tempFilePath
-                })
+          if (this.data.kinds.backIndex === 4) {
+            this.setData({
+              cachePath: this.data.kinds.backsrc
+            })
+          } else {
+            wx.downloadFile({ // 将背景图保存在本地
+              url: this.data.kinds.backsrc,
+              success: (res) => {
+                if (res.statusCode === 200) {
+                  this.setData({
+                    cachePath: res.tempFilePath
+                  })
+                }
               }
-            }
-          })
+            })
+          }
         }
       }
     })
   },
   imgLoaded() {
+    let perLineCount = 0;
     const query = wx.createSelectorQuery();
     query.select('#dommy-dom').boundingClientRect().exec((res) => { // 计算背景图的尺寸，以便计算画布尺寸
+      const ctx = this.data.cvs; // 保存画布引用
+      ctx.setFontSize(this.data.kinds.sizeNum);
+      let perTextWidth = ctx.measureText('语').width;
+      perLineCount = Math.floor(res[0].width * 2 * 0.8 / perTextWidth);
+      let textArrLen = Math.ceil(this.data.kinds.word.length / perLineCount); // ‘寄语’分行
+      let i = 0;
+      do {
+        let arrItem = this.data.kinds.word.substr(perLineCount * i, perLineCount);
+        this.setData({
+          textArr: this.data.textArr.concat(arrItem)
+        })
+        i++;
+      } while (textArrLen > i);
+      const textBlockHeight = this.data.kinds.name !== '' ? this.data.kinds.sizeNum * 1.3 * (textArrLen + 1) + 10 : this.data.kinds.sizeNum * 1.3 * textArrLen; // 计算画布中文字的高度
+      this.setData({
+        textBlockHeight: textBlockHeight
+      })
       this.drawKind(res, this.data.textBlockHeight);
       wx.hideLoading()
     })
@@ -175,7 +185,8 @@ Page({
         'textOffset.x': res[0].width,
         textHeight: textBlockHeight
       })
-      ctx.setFillStyle('white');
+      let backColor = this.data.kinds.backColor || 'white';
+      ctx.setFillStyle(backColor);
       ctx.fillRect(0, 0, res[0].width * 2, this.data.canvasHeight);
       if (this.data.kinds.styleIndex === 1) { // 文字在图片上方
         // ctx.drawImage(this.data.kinds.backsrc, 0, this.data.textHeight + 20, this.data.canvasHalfWidth * 2, this.data.canvasHeight - textBlockHeight - 20); // 画背景图（微信开发者工具）
@@ -191,8 +202,13 @@ Page({
   },
   drawImg() {
     const ctx = this.data.cvs; // 保存画布引用
-    // ctx.drawImage(this.data.kinds.backsrc, 0, 0, this.data.canvasHalfWidth * 2, this.data.canvasHeight); // 画背景图（微信开发者工具）
+    if (this.data.kinds.backColor && this.data.kinds.backColor !== '') {
+      ctx.setFillStyle(this.data.kinds.backColor);
+      ctx.fillRect(0, 0, this.data.canvasHalfWidth * 2, this.data.canvasHeight);
+    } else {
+      // ctx.drawImage(this.data.kinds.backsrc, 0, 0, this.data.canvasHalfWidth * 2, this.data.canvasHeight); // 画背景图（微信开发者工具）
     ctx.drawImage(this.data.cachePath, 0, 0, this.data.canvasHalfWidth * 2, this.data.canvasHeight); // 画背景图（真机）
+    }
     let posX = this.data.textOffset.x - this.data.textHalfWidth;
     let posY = this.data.textOffset.y - this.data.textHeight / 2;
     // 文字位置极值处理
@@ -272,13 +288,13 @@ Page({
   drawText(posY) {
     const len = this.data.textArr.length;
     const ctx = this.data.cvs; // 保存画布引用
-    ctx.setFontSize(18)
+    ctx.setFontSize(this.data.kinds.sizeNum);
     ctx.setTextAlign('center');
     ctx.setTextBaseline('top');
     ctx.setFillStyle(this.data.kinds.colorChosen);
     for (let i = 0; i < len; i++) {
-      ctx.fillText(this.data.textArr[i], this.data.textOffset.x, 25 * i + posY);
-      let textHalfWidth = ctx.measureText(this.data.textArr[i]).width / 2;
+      ctx.fillText(this.data.textArr[i], this.data.textOffset.x, this.data.kinds.sizeNum * 1.3 * i + posY);
+      let textHalfWidth = Math.ceil(ctx.measureText(this.data.textArr[i]).width / 2);
       if (textHalfWidth > this.data.textHalfWidth) {
         this.setData({
           textHalfWidth: textHalfWidth
@@ -287,7 +303,7 @@ Page({
     };
     if (this.data.kinds.name !== '') {
       ctx.setTextAlign('right');
-      ctx.fillText('-- ' + this.data.kinds.name, this.data.textHalfWidth + this.data.textOffset.x, 25 * len + 10 + posY);
+      ctx.fillText('-- ' + this.data.kinds.name, this.data.textHalfWidth + this.data.textOffset.x, this.data.kinds.sizeNum * 1.3 * len + 10 + posY);
     }
     // 绘制时间
     if (this.data.kinds.hasTime) {
