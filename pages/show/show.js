@@ -19,7 +19,8 @@ Page({
     },  // 手指移动之前的位置
     textHalfWidth: 135, // 画布绘制字体的宽度的一半(270位最小宽度)
     flag: true,
-    textBlockHeight: 0 // 图片上文字高度
+    textBlockHeight: 0, // 图片上文字高度
+    imageRes: []
   },
   onLoad: function (options) {
     this.setData({
@@ -34,54 +35,79 @@ Page({
         wx.showLoading({
           title: '加载中',
         })
-        if (this.data.kinds.styleIndex === 0 && this.data.kinds.backColor && this.data.kinds.backColor !== '') {
-          this.setData({
-            cachePath: this.data.kinds.backsrc
+        let imgLoadPromise = new Promise((resolve) => {
+          wx.getImageInfo({
+            src: this.data.kinds.backsrc,
+            success: ((resp) => {
+              wx.getSystemInfo({
+                success: (res) => {
+                  const canvasHalfWidth = Math.floor(res.screenWidth * 0.94 / 2);
+                  const canvasHalfHeight = Math.floor(resp.height * canvasHalfWidth / resp.width);
+                  const canvasHalfSize = {
+                    width: canvasHalfWidth,
+                    height: canvasHalfHeight
+                  }
+                  let perLineCount = 0;
+                  const ctx = this.data.cvs; // 保存画布引用
+                  ctx.setFontSize(this.data.kinds.sizeNum);
+                  let perTextWidth = ctx.measureText('语').width;
+                  perLineCount = Math.floor(canvasHalfWidth * 2 * 0.8 / perTextWidth);
+                  let textArrLen = Math.ceil(this.data.kinds.word.length / perLineCount); // ‘寄语’分行
+                  let i = 0;
+                  do {
+                    let arrItem = this.data.kinds.word.substr(perLineCount * i, perLineCount);
+                    this.setData({
+                      textArr: this.data.textArr.concat(arrItem)
+                    })
+                    i++;
+                  } while (textArrLen > i);
+                  const textBlockHeight = this.data.kinds.name !== '' ? this.data.kinds.sizeNum * 1.3 * (textArrLen + 1) + 10 : this.data.kinds.sizeNum * 1.3 * textArrLen; // 计算画布中文字的高度
+                  this.setData({
+                    textBlockHeight: textBlockHeight,
+                    imageRes: canvasHalfSize
+                  })
+                  resolve()
+                }
+              })
+            })
           })
-        } else {
-          if (this.data.kinds.backIndex === 4) {
+        })
+        let imgDownPromise = new Promise((resolve) => {
+          if (this.data.kinds.styleIndex === 0 && this.data.kinds.backColor && this.data.kinds.backColor !== '') {
             this.setData({
               cachePath: this.data.kinds.backsrc
             })
+            resolve()
           } else {
-            wx.downloadFile({ // 将背景图保存在本地
-              url: this.data.kinds.backsrc,
-              success: (res) => {
-                if (res.statusCode === 200) {
-                  this.setData({
-                    cachePath: res.tempFilePath
-                  })
+            if (this.data.kinds.backIndex === 4) {
+              this.setData({
+                cachePath: this.data.kinds.backsrc
+              })
+              resolve()
+            } else {
+              wx.downloadFile({ // 将背景图保存在本地
+                url: this.data.kinds.backsrc,
+                success: (res) => {
+                  if (res.statusCode === 200) {
+                    this.setData({
+                      cachePath: res.tempFilePath
+                    })
+                    resolve()
+                  }
                 }
-              }
-            })
+              })
+            }
           }
-        }
-      }
-    })
-  },
-  imgLoaded() {
-    let perLineCount = 0;
-    const query = wx.createSelectorQuery();
-    query.select('#dommy-dom').boundingClientRect().exec((res) => { // 计算背景图的尺寸，以便计算画布尺寸
-      const ctx = this.data.cvs; // 保存画布引用
-      ctx.setFontSize(this.data.kinds.sizeNum);
-      let perTextWidth = ctx.measureText('语').width;
-      perLineCount = Math.floor(res[0].width * 2 * 0.8 / perTextWidth);
-      let textArrLen = Math.ceil(this.data.kinds.word.length / perLineCount); // ‘寄语’分行
-      let i = 0;
-      do {
-        let arrItem = this.data.kinds.word.substr(perLineCount * i, perLineCount);
-        this.setData({
-          textArr: this.data.textArr.concat(arrItem)
         })
-        i++;
-      } while (textArrLen > i);
-      const textBlockHeight = this.data.kinds.name !== '' ? this.data.kinds.sizeNum * 1.3 * (textArrLen + 1) + 10 : this.data.kinds.sizeNum * 1.3 * textArrLen; // 计算画布中文字的高度
-      this.setData({
-        textBlockHeight: textBlockHeight
-      })
-      this.drawKind(res, this.data.textBlockHeight);
-      wx.hideLoading()
+        Promise.all([imgLoadPromise, imgDownPromise])
+          .then(res => {
+            wx.hideLoading()
+            this.drawKind(this.data.imageRes, this.data.textBlockHeight);
+          })
+          .catch(res => {
+            console.log(res)
+          });
+      }
     })
   },
   // 点击按钮保存图片
@@ -169,10 +195,10 @@ Page({
   drawKind(res, textBlockHeight) {
     if (this.data.kinds.styleIndex === 0) { // 文字在图片内
       this.setData({
-        canvasHeight: res[0].height * 2,
-        canvasHalfWidth: res[0].width,
-        'textOffset.x': res[0].width,
-        'textOffset.y': res[0].height,
+        canvasHeight: res.height * 2,
+        canvasHalfWidth: res.width,
+        'textOffset.x': res.width,
+        'textOffset.y': res.height,
         textHeight: textBlockHeight
       })
       this.drawImg()
@@ -180,14 +206,14 @@ Page({
       const len = this.data.textArr.length;
       const ctx = this.data.cvs; // 保存画布引用
       this.setData({
-        canvasHeight: res[0].height * 2 + textBlockHeight + 20,
-        canvasHalfWidth: res[0].width,
-        'textOffset.x': res[0].width,
+        canvasHeight: res.height * 2 + textBlockHeight + 20,
+        canvasHalfWidth: res.width,
+        'textOffset.x': res.width,
         textHeight: textBlockHeight
       })
       let backColor = this.data.kinds.backColor || 'white';
       ctx.setFillStyle(backColor);
-      ctx.fillRect(0, 0, res[0].width * 2, this.data.canvasHeight);
+      ctx.fillRect(0, 0, res.width * 2, this.data.canvasHeight);
       if (this.data.kinds.styleIndex === 1) { // 文字在图片上方
         // ctx.drawImage(this.data.kinds.backsrc, 0, this.data.textHeight + 20, this.data.canvasHalfWidth * 2, this.data.canvasHeight - textBlockHeight - 20); // 画背景图（微信开发者工具）
         ctx.drawImage(this.data.cachePath, 0, this.data.textHeight + 20, this.data.canvasHalfWidth * 2, this.data.canvasHeight - textBlockHeight - 20); // 画背景图（真机）
