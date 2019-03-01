@@ -27,7 +27,7 @@
   </view>
   <view class="item-title">字体大小</view>
   <view class="background-btns common-border">
-    <view wx:for="{{textSize}}" wx:for-item="item" wx:for-key="index" wx:key="index" data-id="{{index}}" bindtap="textSizeTap" style="font-size: {{item}}px; text-align: center; line-height: 1;" class="background-btn {{index === textSizeIndex ? 'btn-chosen': ''}}">
+    <view wx:for="{{textSize}}" wx:for-item="item" wx:for-key="index" wx:key="index" data-id="{{index}}" bindtap="textSizeTap" style="font-size: {{item * 2}}rpx; text-align: center; line-height: 1;" class="background-btn {{index === textSizeIndex ? 'btn-chosen': ''}}">
       <text>{{item + '\n号字'}}</text>
     </view>
   </view>
