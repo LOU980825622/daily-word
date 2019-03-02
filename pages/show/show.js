@@ -16,13 +16,13 @@ Page({
     fingerPosition: {
       x: 0,
       y: 0
-    },  // 手指移动之前的位置
+    }, // 手指移动之前的位置
     textHalfWidth: 135, // 画布绘制字体的宽度的一半(270位最小宽度)
     flag: true,
     textBlockHeight: 0, // 图片上文字高度
     imageRes: []
   },
-  onLoad: function (options) {
+  onLoad: function(options) {
     this.setData({
       cvs: wx.createCanvasContext('cvs') // 创建画布
     })
@@ -35,78 +35,36 @@ Page({
         wx.showLoading({
           title: '加载中',
         })
-        let imgLoadPromise = new Promise((resolve) => {
-          wx.getImageInfo({
-            src: this.data.kinds.backsrc,
-            success: ((resp) => {
-              wx.getSystemInfo({
-                success: (res) => {
-                  const canvasHalfWidth = Math.floor(res.screenWidth * 0.94 / 2);
-                  const canvasHalfHeight = Math.floor(resp.height * canvasHalfWidth / resp.width);
-                  const canvasHalfSize = {
-                    width: canvasHalfWidth,
-                    height: canvasHalfHeight
-                  }
-                  let perLineCount = 0;
-                  const ctx = this.data.cvs; // 保存画布引用
-                  ctx.setFontSize(this.data.kinds.sizeNum);
-                  let perTextWidth = ctx.measureText('语').width;
-                  perLineCount = Math.floor(canvasHalfWidth * 2 * 0.8 / perTextWidth);
-                  let textArrLen = Math.ceil(this.data.kinds.word.length / perLineCount); // ‘寄语’分行
-                  let i = 0;
-                  do {
-                    let arrItem = this.data.kinds.word.substr(perLineCount * i, perLineCount);
-                    this.setData({
-                      textArr: this.data.textArr.concat(arrItem)
-                    })
-                    i++;
-                  } while (textArrLen > i);
-                  const textBlockHeight = this.data.kinds.name !== '' ? this.data.kinds.sizeNum * 1.3 * (textArrLen + 1) + 10 : this.data.kinds.sizeNum * 1.3 * textArrLen; // 计算画布中文字的高度
-                  this.setData({
-                    textBlockHeight: textBlockHeight,
-                    imageRes: canvasHalfSize
-                  })
-                  resolve()
-                }
-              })
-            })
-          })
-        })
-        let imgDownPromise = new Promise((resolve) => {
-          if (this.data.kinds.styleIndex === 0 && this.data.kinds.backColor && this.data.kinds.backColor !== '') {
-            this.setData({
-              cachePath: this.data.kinds.backsrc
-            })
-            resolve()
-          } else {
-            if (this.data.kinds.backIndex === 4) {
-              this.setData({
-                cachePath: this.data.kinds.backsrc
-              })
-              resolve()
-            } else {
-              wx.downloadFile({ // 将背景图保存在本地
-                url: this.data.kinds.backsrc,
-                success: (res) => {
-                  if (res.statusCode === 200) {
-                    this.setData({
-                      cachePath: res.tempFilePath
-                    })
-                    resolve()
-                  }
-                }
-              })
-            }
-          }
-        })
-        Promise.all([imgLoadPromise, imgDownPromise])
+        Promise.all([this.getScreenSize(), this.getImgSize(), this.imgDownPromise()])
           .then(res => {
+            const canvasHalfWidth = Math.floor(res[0].screenWidth * 0.94 / 2);
+            const canvasHalfHeight = Math.floor(res[1].height * canvasHalfWidth / res[1].width);
+            const canvasHalfSize = {
+              width: canvasHalfWidth,
+              height: canvasHalfHeight
+            }
+            let perLineCount = 0;
+            const ctx = this.data.cvs; // 保存画布引用
+            ctx.setFontSize(this.data.kinds.sizeNum);
+            let perTextWidth = ctx.measureText('语').width;
+            perLineCount = Math.floor(canvasHalfWidth * 2 * 0.8 / perTextWidth);
+            let textArrLen = Math.ceil(this.data.kinds.word.length / perLineCount); // ‘寄语’分行
+            let i = 0;
+            do {
+              let arrItem = this.data.kinds.word.substr(perLineCount * i, perLineCount);
+              this.setData({
+                textArr: this.data.textArr.concat(arrItem)
+              })
+              i++;
+            } while (textArrLen > i);
+            const textBlockHeight = this.data.kinds.name !== '' ? this.data.kinds.sizeNum * 1.3 * (textArrLen + 1) + 10 : this.data.kinds.sizeNum * 1.3 * textArrLen; // 计算画布中文字的高度
+            this.setData({
+              textBlockHeight: textBlockHeight,
+              imageRes: canvasHalfSize
+            })
             wx.hideLoading()
             this.drawKind(this.data.imageRes, this.data.textBlockHeight);
           })
-          .catch(res => {
-            console.log(res)
-          });
       }
     })
   },
@@ -117,7 +75,7 @@ Page({
       y: 0,
       width: this.data.canvasHalfWidth * 2,
       height: this.data.canvasHeight,
-      destWidth: this.data.canvasHalfWidth * 4,  //2倍关系
+      destWidth: this.data.canvasHalfWidth * 4, //2倍关系
       destHeight: this.data.canvasHeight * 2, //2倍关系
       canvasId: 'cvs',
       fileType: 'jpg',
@@ -192,6 +150,58 @@ Page({
       }
     })
   },
+  // 下载图片的异步函数
+  imgDownPromise() {
+    return new Promise((resolve) => {
+      if (this.data.kinds.styleIndex === 0 && this.data.kinds.backColor && this.data.kinds.backColor !== '') {
+        this.setData({
+          cachePath: this.data.kinds.backsrc
+        })
+        resolve()
+      } else {
+        if (this.data.kinds.backIndex === 4) {
+          this.setData({
+            cachePath: this.data.kinds.backsrc
+          })
+          resolve()
+        } else {
+          wx.downloadFile({ // 将背景图保存在本地
+            url: this.data.kinds.backsrc,
+            success: (res) => {
+              if (res.statusCode === 200) {
+                this.setData({
+                  cachePath: res.tempFilePath
+                })
+                resolve()
+              }
+            }
+          })
+        }
+      }
+    })
+  },
+  // 获取背景图尺寸的异步函数
+  getImgSize(resolve) {
+    return new Promise((resolve) => {
+      wx.getImageInfo({
+        src: this.data.kinds.backsrc,
+        success: ((resp) => {
+          resolve(resp)
+        })
+      })
+    })
+  },
+  // 获取手机屏幕尺寸
+  getScreenSize() {
+    return new Promise((resolve) => {
+      wx.getSystemInfo({
+        success: res => {
+          resolve(res)
+        }
+      })
+    })
+  },
+  // 初始化画布内容
   drawKind(res, textBlockHeight) {
     if (this.data.kinds.styleIndex === 0) { // 文字在图片内
       this.setData({
@@ -233,7 +243,7 @@ Page({
       ctx.fillRect(0, 0, this.data.canvasHalfWidth * 2, this.data.canvasHeight);
     } else {
       // ctx.drawImage(this.data.kinds.backsrc, 0, 0, this.data.canvasHalfWidth * 2, this.data.canvasHeight); // 画背景图（微信开发者工具）
-    ctx.drawImage(this.data.cachePath, 0, 0, this.data.canvasHalfWidth * 2, this.data.canvasHeight); // 画背景图（真机）
+      ctx.drawImage(this.data.cachePath, 0, 0, this.data.canvasHalfWidth * 2, this.data.canvasHeight); // 画背景图（真机）
     }
     let posX = this.data.textOffset.x - this.data.textHalfWidth;
     let posY = this.data.textOffset.y - this.data.textHeight / 2;
